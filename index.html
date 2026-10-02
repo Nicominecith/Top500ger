@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#07070a">
 <title>TOP 500 GERMANY</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=UnifrakturCook:wght@700&display=swap');
 
   :root {
     --bg: #07070a;
@@ -345,6 +345,29 @@
   .stat-val { font-family: var(--display); font-size: 38px; background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
   .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
+  /* ---------- Deutsche Akzente ---------- */
+  .flagbar { position: fixed; top: 0; left: 0; right: 0; height: 6px; display: flex; z-index: 60; box-shadow: 0 2px 18px rgba(225,6,0,0.45); }
+  .flagbar span { flex: 1; }
+  .flagbar span:nth-child(1) { background: #000; }
+  .flagbar span:nth-child(2) { background: var(--red); }
+  .flagbar span:nth-child(3) { background: var(--gold); }
+
+  .subtitle { font-size: 15px; color: var(--gold); margin-bottom: 6px; letter-spacing: 0.04em; text-shadow: 0 0 18px rgba(255,207,31,0.3); }
+  .subtitle.fraktur { font-family: 'UnifrakturCook', 'Old English Text MT', Georgia, serif; font-weight: 700; font-size: 22px; letter-spacing: 0.01em; }
+
+  .attempt-box { border-left: 3px solid transparent; }
+  .attempt-box:nth-child(3n+1) { border-left-color: #000; }
+  .attempt-box:nth-child(3n+2) { border-left-color: var(--red); }
+  .attempt-box:nth-child(3n) { border-left-color: var(--gold); }
+  .attempt-box.active { border-left-color: var(--gold); }
+  .attempt-box.correct { border-left-color: var(--correct); }
+  .attempt-box.wrong { border-left-color: var(--wrong); }
+
+  .result-box::before {
+    content: ""; display: block; height: 5px; margin: -22px -20px 18px; border-radius: 18px 18px 0 0;
+    background: linear-gradient(90deg, #000 0 33.3%, var(--red) 33.3% 66.6%, var(--gold) 66.6%);
+  }
+
   /* ---------- Cookie-Abfrage ---------- */
   .cookie-banner {
     position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
@@ -390,6 +413,7 @@
 
 <div class="aurora"><span class="a1"></span><span class="a2"></span><span class="a3"></span></div>
 <div class="grain"></div>
+<div class="flagbar" aria-hidden="true"><span></span><span></span><span></span></div>
 
 <div class="app">
   <header>
@@ -406,9 +430,10 @@
     </div>
 
     <div class="brand">
-      <div class="badge">HEARDLE</div>
+      <div class="badge">🇩🇪 HEARDLE</div>
       <h1><span class="big">TOP 500</span><span class="out">GERMANY</span></h1>
       <div class="flag"><span class="f1"></span><span class="f2"></span><span class="f3"></span></div>
+      <div class="subtitle" id="txtSubtitle"></div>
       <div class="tagline"><span class="live-dot" id="liveDot"></span><span id="txtTagline"></span></div>
     </div>
   </header>
@@ -463,8 +488,8 @@
 </div>
 
 <div class="footer">
-  Designed and coded by Nicominecith • Vorschau &amp; Cover via <a href="https://music.apple.com" target="_blank" rel="noopener">Apple Music</a>
-  • <button class="footer-link" id="cookieLink">Cookies</button>
+  <span id="ftMade"></span> • <span id="ftCover"></span> <a href="https://music.apple.com" target="_blank" rel="noopener">Apple Music</a>
+  • <button class="footer-link" id="cookieLink"></button>
 </div>
 
 <div class="cookie-banner" id="cookieBanner" role="dialog" aria-live="polite">
@@ -1047,6 +1072,7 @@ const TRANSLATIONS = {
     loading: "Song wird geladen…",
     loadError: "Song konnte nicht geladen werden — versuch's mit „Nächster Song“.",
     placeholder: "Suchen nach Interpret oder Titel...",
+    subtitle: "Die größten Hits Deutschlands",
     skip: "Skip", submit: "Submit",
     won: "Richtig erraten!", lost: "Leider falsch!",
     fullPlay: "▶ Vorschau hören / Pause",
@@ -1062,13 +1088,17 @@ const TRANSLATIONS = {
     cookieTitle: "🍪 Cookies",
     cookieText: "Dürfen wir deine Statistik und Siegesserie in deinem Browser speichern? Dafür nutzen wir nur lokalen Speicher, keine Tracker und keine Weitergabe.",
     cookieYes: "Akzeptieren", cookieNo: "Ablehnen",
-    cookieState: { yes: "Speichern: an", no: "Speichern: aus", none: "Noch nicht entschieden" }
+    cookieState: { yes: "Speichern: an", no: "Speichern: aus", none: "Noch nicht entschieden" },
+    ftMade: "Entwickelt und gestaltet von Nicominecith", ftCover: "Vorschau & Cover via", ftCookies: "Cookies",
+    tipLang: "Sprache", tipInfo: "Info", tipStats: "Statistik", tipHelp: "Hilfe", tipStreak: "Erfolgsserie",
+    tipPlay: "Abspielen", tipClose: "Schließen", coverAlt: "Album-Cover"
   },
   EN: {
     instruction: "Turn up the volume and tap to start!",
     loading: "Loading song…",
     loadError: "Couldn't load that song — try \"Next Song\".",
     placeholder: "Search for artist or title...",
+    subtitle: "Germany's biggest hits",
     skip: "Skip", submit: "Submit",
     won: "Correct guess!", lost: "Game over!",
     fullPlay: "▶ Play preview / Pause",
@@ -1084,13 +1114,17 @@ const TRANSLATIONS = {
     cookieTitle: "🍪 Cookies",
     cookieText: "May we save your stats and win streak in your browser? We only use local storage — no trackers and no sharing.",
     cookieYes: "Accept", cookieNo: "Decline",
-    cookieState: { yes: "Saving: on", no: "Saving: off", none: "Not decided yet" }
+    cookieState: { yes: "Saving: on", no: "Saving: off", none: "Not decided yet" },
+    ftMade: "Designed and coded by Nicominecith", ftCover: "Previews & covers via", ftCookies: "Cookies",
+    tipLang: "Language", tipInfo: "Info", tipStats: "Statistics", tipHelp: "Help", tipStreak: "Win streak",
+    tipPlay: "Play", tipClose: "Close", coverAlt: "Album cover"
   },
   RU: {
     instruction: "Включите звук и нажмите для старта!",
     loading: "Загрузка трека…",
     loadError: "Не удалось загрузить трек — нажмите «Следующий трек».",
     placeholder: "Поиск исполнителя или трека...",
+    subtitle: "Крупнейшие хиты Германии",
     skip: "Пропустить", submit: "Ответить",
     won: "Правильно!", lost: "Неугадано!",
     fullPlay: "▶ Превью / Пауза",
@@ -1106,7 +1140,10 @@ const TRANSLATIONS = {
     cookieTitle: "🍪 Cookies",
     cookieText: "Можно сохранить вашу статистику и серию побед в браузере? Мы используем только локальное хранилище — без трекеров и передачи данных.",
     cookieYes: "Принять", cookieNo: "Отклонить",
-    cookieState: { yes: "Сохранение: вкл", no: "Сохранение: выкл", none: "Пока не выбрано" }
+    cookieState: { yes: "Сохранение: вкл", no: "Сохранение: выкл", none: "Пока не выбрано" },
+    ftMade: "Разработано и создано Nicominecith", ftCover: "Превью и обложки:", ftCookies: "Cookies",
+    tipLang: "Язык", tipInfo: "Инфо", tipStats: "Статистика", tipHelp: "Помощь", tipStreak: "Серия побед",
+    tipPlay: "Играть", tipClose: "Закрыть", coverAlt: "Обложка альбома"
   }
 };
 
@@ -1306,8 +1343,24 @@ function updateLanguageUI() {
   const t = TRANSLATIONS[currentLang];
   document.getElementById('btnLang').textContent = currentLang;
   document.documentElement.lang = currentLang.toLowerCase();
-  if (!gameOver && currentSong) document.getElementById('txtInstruction').textContent = t.instruction;
+  renderInstruction();
+  document.getElementById('ftMade').textContent = t.ftMade;
+  document.getElementById('ftCover').textContent = t.ftCover;
+  document.getElementById('cookieLink').textContent = t.ftCookies;
+  const setTip = (id, txt) => { const el = document.getElementById(id); el.title = txt; el.setAttribute('aria-label', txt); };
+  setTip('btnLang', t.tipLang); setTip('btnInfo', t.tipInfo); setTip('btnStats', t.tipStats);
+  setTip('btnHelp', t.tipHelp); setTip('streakBadge', t.tipStreak); setTip('playBtn', t.tipPlay);
+  document.getElementById('modalClose').setAttribute('aria-label', t.tipClose);
+  document.getElementById('coverImg').alt = t.coverAlt;
+  if (typeof modalBuilder === 'function' && document.getElementById('modalOverlay').classList.contains('active')) {
+    document.getElementById('modalBody').innerHTML = modalBuilder();
+  }
   document.getElementById('guessInput').placeholder = t.placeholder;
+  const sub = document.getElementById('txtSubtitle');
+  sub.textContent = t.subtitle;
+  sub.classList.toggle('fraktur', currentLang === 'DE');
+  document.querySelectorAll('.attempt-box .lbl[data-skip="1"]').forEach(el => { el.textContent = t.skippedText; });
+  if (gameOver && currentSong) renderResultTexts();
   document.getElementById('skipBtn').textContent = t.skip;
   document.getElementById('submitBtn').textContent = t.submit;
   document.getElementById('fullPlayBtn').textContent = t.fullPlay;
@@ -1401,6 +1454,7 @@ function handleGuess(userGuess, isSkip = false) {
 
   if (isSkip) {
     lbl.textContent = t.skippedText;
+    lbl.dataset.skip = '1';
     box.classList.add('skipped');
   } else {
     lbl.textContent = userGuess;
@@ -1424,6 +1478,21 @@ function handleGuess(userGuess, isSkip = false) {
   document.getElementById('guessInput').value = '';
   document.getElementById('clearBtn').style.display = 'none';
   document.getElementById('suggestions').classList.remove('open');
+}
+
+let lastWon = false;
+let uiState = 'loading';
+function renderInstruction() {
+  const t = TRANSLATIONS[currentLang];
+  const map = { loading: t.loading, ready: t.instruction, error: t.loadError, over: '' };
+  document.getElementById('txtInstruction').textContent = map[uiState] || '';
+}
+
+function renderResultTexts() {
+  const t = TRANSLATIONS[currentLang];
+  document.getElementById('resultStatus').textContent = (lastWon ? '🎉 ' : '❌ ') + (lastWon ? t.won : t.lost);
+  document.getElementById('resultTitle').textContent = `${currentSong.artist} - ${currentSong.title}`;
+  document.getElementById('rankChip').textContent = t.rank.replace('{n}', currentSong.rank);
 }
 
 function confetti() {
@@ -1454,14 +1523,14 @@ function endGame(won) {
 
   document.getElementById('inputContainer').style.display = 'none';
   document.getElementById('actionBtns').style.display = 'none';
-  document.getElementById('txtInstruction').textContent = '';
+  uiState = 'over';
+  renderInstruction();
 
   const resBox = document.getElementById('resultBox');
   resBox.classList.remove('win', 'lose');
   resBox.classList.add('show', won ? 'win' : 'lose');
-  document.getElementById('resultStatus').textContent = (won ? '🎉 ' : '❌ ') + (won ? t.won : t.lost);
-  document.getElementById('resultTitle').textContent = `${currentSong.artist} - ${currentSong.title}`;
-  document.getElementById('rankChip').textContent = t.rank.replace('{n}', currentSong.rank);
+  lastWon = won;
+  renderResultTexts();
 
   const coverUrl = currentSong.cover || (currentTrack && currentTrack.cover) || placeholderCover(currentSong);
   document.getElementById('coverImg').src = coverUrl;
@@ -1503,16 +1572,16 @@ async function startNewGame() {
   document.getElementById('maxTime').textContent = formatTime(DURATIONS[0]);
   document.getElementById('timelineProgress').style.width = '0%';
   document.getElementById('playBtn').disabled = true;
-  document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].loading;
+  uiState = 'loading';
+  renderInstruction();
 
   const ok = await pickAndLoadSong();
   if (myRound !== roundId) return;
 
   document.getElementById('playBtn').disabled = false;
   document.getElementById('guessInput').disabled = false;
-  document.getElementById('txtInstruction').textContent = ok
-    ? TRANSLATIONS[currentLang].instruction
-    : TRANSLATIONS[currentLang].loadError;
+  uiState = ok ? 'ready' : 'error';
+  renderInstruction();
 }
 
 /* ---------- Events ---------- */
@@ -1572,29 +1641,30 @@ clearBtn.addEventListener('click', () => {
 
 const overlay = document.getElementById('modalOverlay');
 const modalBody = document.getElementById('modalBody');
-function openModal(html) { modalBody.innerHTML = html; overlay.classList.add('active'); }
+let modalBuilder = null;
+function openModal(builder) { modalBuilder = builder; modalBody.innerHTML = builder(); overlay.classList.add('active'); }
 document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('active'));
 overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
 
 document.getElementById('btnInfo').addEventListener('click', () => {
-  const t = TRANSLATIONS[currentLang];
-  openModal(`<h3>${t.infoTitle}</h3><p>${t.infoText}</p>`);
+  openModal(() => { const t = TRANSLATIONS[currentLang]; return `<h3>${t.infoTitle}</h3><p>${t.infoText}</p>`; });
 });
 document.getElementById('btnStats').addEventListener('click', () => {
+  openModal(() => {
   const t = TRANSLATIONS[currentLang];
   const rate = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
-  openModal(`
+  return `
     <h3>${t.statsTitle}</h3>
     <div class="stat-grid">
       <div><div class="stat-val">${stats.played}</div><div class="stat-lbl">${t.statPlayed}</div></div>
       <div><div class="stat-val">${stats.wins}</div><div class="stat-lbl">${t.statWins}</div></div>
       <div><div class="stat-val">${rate}%</div><div class="stat-lbl">${t.statRate}</div></div>
     </div>
-    <p style="margin-top:16px;font-size:12px;text-align:center">🍪 ${t.cookieState[consent === 'yes' ? 'yes' : consent === 'no' ? 'no' : 'none']}</p>`);
+    <p style="margin-top:16px;font-size:12px;text-align:center">🍪 ${t.cookieState[consent === 'yes' ? 'yes' : consent === 'no' ? 'no' : 'none']}</p>`;
+  });
 });
 document.getElementById('btnHelp').addEventListener('click', () => {
-  const t = TRANSLATIONS[currentLang];
-  openModal(`<h3>${t.helpTitle}</h3><p>${t.helpText}</p>`);
+  openModal(() => { const t = TRANSLATIONS[currentLang]; return `<h3>${t.helpTitle}</h3><p>${t.helpText}</p>`; });
 });
 
 document.getElementById('cookieYes').addEventListener('click', () => setConsent('yes'));
@@ -1608,7 +1678,8 @@ document.getElementById('cookieLink').addEventListener('click', showCookieBanner
   updateLanguageUI();
   document.getElementById('playBtn').disabled = true;
   document.getElementById('guessInput').disabled = true;
-  document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].loading;
+  uiState = 'loading';
+  renderInstruction();
   if (consent !== 'yes' && consent !== 'no') setTimeout(showCookieBanner, 600);
   await loadLiveChart();
   updateLanguageUI();
