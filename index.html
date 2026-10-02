@@ -1334,9 +1334,17 @@ function stopPlayback() {
   setPlayingUI(false);
 }
 
+/* Ende des Schnipsels: Zeitanzeige springt auf die volle Sekundenzahl (aufgerundet) */
+function snippetEnd() {
+  const maxSec = DURATIONS[attempt] || totalTime;
+  stopPlayback();
+  document.getElementById('timelineProgress').style.width = Math.min(100, maxSec / totalTime * 100) + '%';
+  document.getElementById('currentTime').textContent = formatTime(maxSec);
+}
+
 function startStopTimer(sec) {
   clearTimeout(playTimer);
-  playTimer = setTimeout(stopPlayback, Math.max(0, sec) * 1000);
+  playTimer = setTimeout(snippetEnd, Math.max(0, sec) * 1000);
 }
 
 function startProgress() {
