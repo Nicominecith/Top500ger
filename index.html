@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0c">
+<title>TOP 500 GERMANY</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&display=swap');
+
+  :root {
+    --bg: #0a0a0c;
+    --surface: #141418;
+    --surface-hover: #1e1e24;
+    --border: #26262e;
+    --border-light: #3a3a46;
+    --text: #ffffff;
+    --text-muted: #9a9aa8;
+    --red: #dd0000;
+    --gold: #ffce00;
+    --correct: #2be08a;
+    --wrong: #ff4d6d;
+    --display: 'Anton', Impact, 'Arial Narrow Bold', sans-serif;
+    --body: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --vsize: 190px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { min-height: 100%; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 12px 16px 64px 16px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Deutschland-Glow im Hintergrund */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(60% 40% at 0% 0%, rgba(221,0,0,0.20), transparent 70%),
+      radial-gradient(60% 40% at 100% 0%, rgba(255,206,0,0.14), transparent 70%),
+      radial-gradient(80% 50% at 50% 110%, rgba(221,0,0,0.12), transparent 70%);
+    pointer-events: none;
+  }
+
+  :focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  /* ---------- Header ---------- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+  }
+  .top-group { display: flex; align-items: center; gap: 8px; }
+
+  .top-icon, .lang-btn, .streak-badge {
+    background: rgba(20,20,24,0.8);
+    border: 1px solid var(--border);
+    height: 36px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--body);
+    font-size: 14px;
+    font-weight: 700;
+    transition: all 0.2s ease;
+  }
+  .top-icon, .lang-btn { width: 36px; border-radius: 50%; cursor: pointer; }
+  .top-icon:hover, .lang-btn:hover { background: var(--surface-hover); border-color: var(--gold); }
+  .top-icon:active, .lang-btn:active { transform: scale(0.92); }
+
+  .streak-badge {
+    padding: 0 14px;
+    gap: 6px;
+    border-radius: 20px;
+    user-select: none;
+  }
+  .streak-badge.active {
+    color: var(--gold);
+    border-color: rgba(255,206,0,0.5);
+    background: rgba(255,206,0,0.10);
+    box-shadow: 0 0 16px rgba(255,206,0,0.18);
+  }
+
+  .brand { text-align: center; margin: 14px 0 22px; }
+  .brand h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    line-height: 0.92;
+    text-transform: uppercase;
+  }
+  .brand .big {
+    display: block;
+    font-size: clamp(60px, 19vw, 84px);
+    letter-spacing: 0.02em;
+    color: #fff;
+    text-shadow: 0 4px 0 rgba(221,0,0,0.85), 0 0 40px rgba(221,0,0,0.35);
+  }
+  .brand .out {
+    display: block;
+    font-size: clamp(34px, 11.5vw, 50px);
+    letter-spacing: 0.2em;
+    margin-right: -0.2em;
+    color: transparent;
+    -webkit-text-stroke: 1.5px var(--gold);
+  }
+  .flag {
+    display: flex;
+    width: 132px;
+    height: 7px;
+    margin: 14px auto 10px;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px var(--border-light);
+  }
+  .flag span { flex: 1; }
+  .flag .f1 { background: #000; }
+  .flag .f2 { background: var(--red); }
+  .flag .f3 { background: var(--gold); }
+
+  .tagline {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--correct);
+    box-shadow: 0 0 8px var(--correct);
+    display: none;
+  }
+  .live-dot.on { display: inline-block; }
+
+  /* ---------- Versuche ---------- */
+  .attempts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 22px;
+  }
+
+  .attempt-box {
+    height: 40px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(20,20,24,0.85);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px 0 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    overflow: hidden;
+    transition: all 0.2s ease;
+  }
+  .attempt-box .n {
+    flex: 0 0 38px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 18px;
+    color: var(--text-muted);
+    background: rgba(255,255,255,0.04);
+    border-right: 1px solid var(--border);
+  }
+  .attempt-box .lbl {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .attempt-box .dur { font-size: 12px; font-weight: 600; opacity: 0.7; }
+
+  .attempt-box.active { border-color: var(--gold); }
+  .attempt-box.active .n { background: var(--gold); color: #000; border-right-color: var(--gold); }
+
+  .attempt-box.correct {
+    border-color: var(--correct);
+    background: rgba(43,224,138,0.12);
+    color: var(--correct);
+    box-shadow: 0 0 14px rgba(43,224,138,0.18);
+  }
+  .attempt-box.correct .n { background: var(--correct); color: #000; border-right-color: var(--correct); }
+  .attempt-box.wrong {
+    border-color: var(--wrong);
+    background: rgba(255,77,109,0.12);
+    color: var(--wrong);
+  }
+  .attempt-box.wrong .n { background: var(--wrong); color: #000; border-right-color: var(--wrong); }
+  .attempt-box.skipped { background: rgba(255,255,255,0.02); }
+
+  /* ---------- Player / Vinyl ---------- */
+  .player-section {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .instruction {
+    color: var(--text-muted);
+    font-size: 14px;
+    text-align: center;
+    margin-bottom: 14px;
+    font-weight: 500;
+    min-height: 20px;
+  }
+
+  .deck {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .eq {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    height: 70px;
+    width: 46px;
+  }
+  .eq i {
+    display: block;
+    width: 6px;
+    height: 14%;
+    border-radius: 3px;
+    background: linear-gradient(to top, var(--red), var(--gold));
+    opacity: 0.45;
+    transform-origin: bottom;
+  }
+  .eq.on i { opacity: 1; animation: bounce 0.9s ease-in-out infinite; }
+  @keyframes bounce {
+    0%, 100% { height: 14%; }
+    50% { height: 100%; }
+  }
+
+  .vinyl-wrap {
+    position: relative;
+    width: var(--vsize);
+    height: var(--vsize);
+    flex: 0 0 auto;
+  }
+
+  .vinyl {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 50% 50%, transparent 0 33%, rgba(255,255,255,0.05) 33.5% 34%, transparent 34.5% 44%, rgba(255,255,255,0.04) 44.5% 45%, transparent 45.5% 58%, rgba(255,255,255,0.035) 58.5% 59%, transparent 60% 72%, rgba(255,255,255,0.03) 72.5% 73%, transparent 74%),
+      conic-gradient(from 25deg, #09090b, #1d1d23 12%, #09090b 25%, #1d1d23 37%, #09090b 50%, #1d1d23 62%, #09090b 75%, #1d1d23 87%, #09090b);
+    box-shadow: 0 0 0 2px #000, 0 18px 44px rgba(0,0,0,0.7), 0 0 60px rgba(221,0,0,0.20);
+    animation: spin 2.4s linear infinite;
+    animation-play-state: paused;
+  }
+  .vinyl.spin { animation-play-state: running; box-shadow: 0 0 0 2px #000, 0 18px 44px rgba(0,0,0,0.7), 0 0 70px rgba(255,206,0,0.28); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .vinyl-label {
+    position: absolute;
+    inset: 31%;
+    border-radius: 50%;
+    background: linear-gradient(to bottom, #000 0 33.3%, var(--red) 33.3% 66.6%, var(--gold) 66.6%);
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 0 0 3px #000;
+  }
+  .vinyl-label.cover { background-size: cover; background-position: center; }
+  .vinyl-label::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 9%; height: 9%;
+    transform: translate(-50%, -50%);
+    background: var(--bg);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0,0,0,0.6);
+  }
+
+  .big-play-btn {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 62px; height: 62px;
+    margin: -31px 0 0 -31px;
+    border-radius: 50%;
+    border: 2px solid var(--text);
+    background: rgba(10,10,12,0.78);
+    backdrop-filter: blur(3px);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.6);
+    z-index: 2;
+  }
+  .big-play-btn:hover:not(:disabled) { transform: scale(1.07); background: var(--gold); border-color: var(--gold); color: #000; }
+  .big-play-btn:active:not(:disabled) { transform: scale(0.95); }
+  .big-play-btn:disabled { opacity: 0.45; cursor: wait; }
+  .big-play-btn svg { width: 24px; height: 24px; fill: currentColor; margin-left: 2px; }
+
+  .timeline-wrapper { width: 100%; margin-bottom: 8px; }
+  .timeline-bar {
+    width: 100%;
+    height: 14px;
+    background: var(--surface);
+    border-radius: 7px;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .timeline-segment { height: 100%; border-right: 2px solid var(--bg); background: rgba(255,255,255,0.035); }
+  .timeline-segment:last-of-type { border-right: none; }
+  .timeline-segment.reached { background: rgba(255,206,0,0.14); }
+  .timeline-progress {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, var(--red), var(--gold));
+    border-radius: 7px;
+    pointer-events: none;
+  }
+
+  .time-row {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .time-label { font-size: 13px; font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+  /* ---------- Eingabe ---------- */
+  .input-container { position: relative; width: 100%; }
+
+  .search-box {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 40px;
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 15px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .search-box:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255,206,0,0.12); }
+  .search-box:disabled { opacity: 0.5; }
+
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); font-size: 14px; pointer-events: none;
+  }
+  .clear-icon {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted); cursor: pointer; font-size: 14px; display: none;
+  }
+
+  .suggestions {
+    position: absolute;
+    bottom: 100%;
+    left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+    margin-bottom: 6px;
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.6);
+  }
+  .suggestions.open { display: block; }
+  .suggestions div { padding: 12px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .suggestions div:last-child { border-bottom: none; }
+  .suggestions div:hover { background: var(--surface-hover); }
+
+  .action-btns { display: flex; gap: 10px; margin-top: 10px; width: 100%; }
+
+  .btn-action {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 13px;
+    border-radius: 8px;
+    font-family: var(--body);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-action:hover { background: var(--surface-hover); border-color: var(--border-light); }
+  .btn-action.primary { background: var(--gold); border-color: var(--gold); color: #000; }
+  .btn-action.primary:hover { background: #ffd92e; }
+
+  /* ---------- Ergebnis ---------- */
+  .result-box {
+    text-align: center;
+    margin-top: 6px;
+    padding: 20px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    display: none;
+    width: 100%;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6);
+  }
+  .result-box.show { display: block; animation: pop 0.35s ease; }
+  .result-box.win { border-color: rgba(43,224,138,0.6); box-shadow: 0 0 30px rgba(43,224,138,0.18), 0 8px 28px rgba(0,0,0,0.6); }
+  .result-box.lose { border-color: rgba(255,77,109,0.6); box-shadow: 0 0 30px rgba(255,77,109,0.16), 0 8px 28px rgba(0,0,0,0.6); }
+
+  @keyframes pop {
+    from { opacity: 0; transform: translateY(12px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .cover-art-container {
+    width: 140px; height: 140px;
+    margin: 0 auto 14px auto;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+    background: #000;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  }
+  .cover-art-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .result-status { font-family: var(--display); font-size: 26px; letter-spacing: 0.04em; margin-bottom: 4px; text-transform: uppercase; }
+  .result-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .rank-chip {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 15px;
+    letter-spacing: 0.05em;
+    padding: 4px 12px;
+    border-radius: 4px;
+    background: var(--gold);
+    color: #000;
+    margin-bottom: 16px;
+  }
+  .result-box .btn-action { width: 100%; margin-bottom: 10px; }
+  .result-box .btn-action:last-child { margin-bottom: 0; }
+
+  /* ---------- Modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.82);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+  .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-top: 4px solid var(--gold);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+  }
+  .modal-content h3 { font-family: var(--display); font-weight: 400; font-size: 24px; letter-spacing: 0.03em; margin-bottom: 12px; text-transform: uppercase; }
+  .modal-content p { font-size: 15px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+  .modal-close {
+    position: absolute; top: 14px; right: 14px;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 18px; cursor: pointer;
+  }
+  .stat-grid { display: flex; justify-content: space-around; text-align: center; margin: 20px 0 4px; }
+  .stat-val { font-family: var(--display); font-size: 36px; color: var(--gold); }
+  .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---------- Footer ---------- */
+  .footer {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%;
+    background: #060608;
+    border-top: 1px solid var(--border);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    z-index: 50;
+  }
+  .footer::before {
+    content: "";
+    position: absolute; top: -1px; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #000 0 33.3%, var(--red) 33.3% 66.6%, var(--gold) 66.6%);
+  }
+  .footer a { color: var(--text-muted); text-decoration: underline; }
+
+  @media (max-height: 760px) {
+    :root { --vsize: 150px; }
+    .brand { margin: 8px 0 14px; }
+    .attempts-container { margin-bottom: 14px; }
+    .attempt-box { height: 36px; font-size: 13px; }
+    .eq { height: 54px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .vinyl, .eq.on i, .result-box.show { animation: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="top-bar">
+      <div class="top-group">
+        <button class="lang-btn" id="btnLang" aria-label="Sprache">DE</button>
+        <button class="top-icon" id="btnInfo" title="Info" aria-label="Info">i</button>
+      </div>
+      <div class="top-group">
+        <div class="streak-badge" id="streakBadge" title="Erfolgsserie">🔥 <span id="streakCount">0</span></div>
+        <button class="top-icon" id="btnStats" title="Statistik" aria-label="Statistik">📊</button>
+        <button class="top-icon" id="btnHelp" title="Hilfe" aria-label="Hilfe">?</button>
+      </div>
+    </div>
+
+    <div class="brand">
+      <h1><span class="big">TOP 500</span><span class="out">GERMANY</span></h1>
+      <div class="flag"><span class="f1"></span><span class="f2"></span><span class="f3"></span></div>
+      <div class="tagline"><span class="live-dot" id="liveDot"></span><span id="txtTagline"></span></div>
+    </div>
+  </header>
+
+  <div class="attempts-container" id="attemptsContainer"></div>
+
+  <div class="player-section">
+    <div class="instruction" id="txtInstruction">Drehe den Ton auf und tippe zum Starten!</div>
+
+    <div class="deck">
+      <div class="eq" id="eqL" aria-hidden="true"></div>
+      <div class="vinyl-wrap">
+        <div class="vinyl" id="vinyl"><div class="vinyl-label" id="vinylLabel"></div></div>
+        <button class="big-play-btn" id="playBtn" aria-label="Abspielen">
+          <svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
+      <div class="eq" id="eqR" aria-hidden="true"></div>
+    </div>
+
+    <div class="timeline-wrapper">
+      <div class="timeline-bar" id="timelineBar">
+        <div class="timeline-progress" id="timelineProgress"></div>
+      </div>
+    </div>
+    <div class="time-row">
+      <span class="time-label" id="currentTime">0:00.0</span>
+      <span class="time-label" id="maxTime">0:00.1</span>
+    </div>
+
+    <div class="input-container" id="inputContainer">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-box" id="guessInput" placeholder="Suchen nach Interpret oder Titel..." autocomplete="off">
+      <span class="clear-icon" id="clearBtn">✕</span>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+
+    <div class="action-btns" id="actionBtns">
+      <button class="btn-action" id="skipBtn">Skip</button>
+      <button class="btn-action primary" id="submitBtn">Submit</button>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="cover-art-container"><img id="coverImg" src="" alt="Album Cover"></div>
+      <div class="result-status" id="resultStatus"></div>
+      <div class="result-title" id="resultTitle"></div>
+      <div class="rank-chip" id="rankChip"></div>
+      <button class="btn-action" id="fullPlayBtn">▶ Vorschau hören / Pause</button>
+      <button class="btn-action primary" id="nextBtn">Nächster Song</button>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Designed and coded by Nicominecith • Vorschau &amp; Cover via <a href="https://music.apple.com" target="_blank" rel="noopener">Apple Music</a>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose" aria-label="Schließen">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   Songliste: 100 Hits aus den deutschen Charts (Offline-Liste).
+   Beim Start wird versucht, die aktuelle Apple-Music-Top-100
+   Deutschland live zu laden. Klappt das nicht, gilt diese Liste.
+   ============================================================ */
+const FALLBACK_SONGS = [
+  { artist: "Oimara", title: "Wackelkontakt" },
+  { artist: "ROSÉ & Bruno Mars", title: "APT." },
+  { artist: "Zartmann", title: "Tau mich auf" },
+  { artist: "Alex Warren", title: "Ordinary" },
+  { artist: "HUNTR/X", title: "Golden" },
+  { artist: "Linkin Park", title: "The Emptiness Machine" },
+  { artist: "Gracie Abrams", title: "That's So True" },
+  { artist: "WizTheMc x bees & honey", title: "Show Me Love" },
+  { artist: "Lola Young", title: "Messy" },
+  { artist: "Lady Gaga & Bruno Mars", title: "Die With A Smile" },
+  { artist: "Nina Chuba", title: "Fata Morgana" },
+  { artist: "HUGEL, Topic & Arash feat. Daecolm", title: "I Adore You" },
+  { artist: "Ayliva & Apache 207", title: "Wunder" },
+  { artist: "Benson Boone", title: "Beautiful Things" },
+  { artist: "Ed Sheeran", title: "Azizam" },
+  { artist: "Taylor Swift", title: "The Fate of Ophelia" },
+  { artist: "Adam Port, Stryv, Keinemusik, Orso & Malachiii", title: "Move" },
+  { artist: "Ayliva", title: "Wie?" },
+  { artist: "Tom Odell", title: "Another Love" },
+  { artist: "Journey", title: "Don't Stop Believin'" },
+  { artist: "Shaboozey", title: "A Bar Song (Tipsy)" },
+  { artist: "Sabrina Carpenter", title: "Espresso" },
+  { artist: "Nina Chuba", title: "Unsicher" },
+  { artist: "Doechii", title: "Anxiety" },
+  { artist: "Myles Smith", title: "Nice To Meet You" },
+  { artist: "Artemas", title: "I Like The Way You Kiss Me" },
+  { artist: "Nina Chuba", title: "Wenn das Liebe ist" },
+  { artist: "David Guetta & Sia", title: "Beautiful People" },
+  { artist: "Bebe Rexha & Faithless", title: "New Religion" },
+  { artist: "Dua Lipa", title: "Training Season" },
+  { artist: "Tame Impala", title: "Dracula" },
+  { artist: "Makko & The Chainsmokers", title: "Inundauswendig" },
+  { artist: "Michael Jackson", title: "Billie Jean" },
+  { artist: "The Neighbourhood", title: "Sweater Weather" },
+  { artist: "Macklemore & Ryan Lewis", title: "Can't Hold Us" },
+  { artist: "Ravyn Lenae", title: "Love Me Not" },
+  { artist: "Olivia Dean", title: "Man I Need" },
+  { artist: "Zara Larsson", title: "Lush Life" },
+  { artist: "Djo", title: "End of Beginning" },
+  { artist: "Dominic Fike", title: "Babydoll" },
+  { artist: "Olivia Rodrigo", title: "Drop Dead" },
+  { artist: "Alex Warren", title: "Fever Dream" },
+  { artist: "Olivia Rodrigo", title: "The Cure" },
+  { artist: "Samra & Capital Bra", title: "Ghetto Superstars" },
+  { artist: "Summer Cem & Shirin David", title: "MO' MONEY MO' HATERS" },
+  { artist: "Ariana Grande", title: "hate that i made you love me" },
+  { artist: "Wir sind Helden", title: "Von hier an blind" },
+  { artist: "HUGEL, Imael Angel & Ultra Naté", title: "Movin' To The Sun" },
+  { artist: "Temper City", title: "Self Aware" },
+  { artist: "The Killers", title: "Mr. Brightside" },
+  { artist: "Rammstein", title: "Sonne" },
+  { artist: "Rammstein", title: "Du hast" },
+  { artist: "Nena", title: "99 Luftballons" },
+  { artist: "Peter Fox", title: "Alles neu" },
+  { artist: "Helene Fischer", title: "Atemlos durch die Nacht" },
+  { artist: "Mark Forster", title: "Au Revoir" },
+  { artist: "Apache 207", title: "Roller" },
+  { artist: "Shirin David", title: "Bauch Beine Po" },
+  { artist: "Namika", title: "Lieblingsmensch" },
+  { artist: "Tokio Hotel", title: "Durch den Monsun" },
+  { artist: "Silbermond", title: "Das Beste" },
+  { artist: "Juli", title: "Perfekte Welle" },
+  { artist: "Sido", title: "Mein Block" },
+  { artist: "Cro", title: "Easy" },
+  { artist: "Ski Aggu, Joost & Otto Waalkes", title: "Friesenjung" },
+  { artist: "DJ Robin & Schürze", title: "Layla" },
+  { artist: "Max Giesinger", title: "80 Millionen" },
+  { artist: "Felix Jaehn & Jasmine Thompson", title: "Ain't Nobody (Loves Me Better)" },
+  { artist: "OMI", title: "Cheerleader (Felix Jaehn Remix)" },
+  { artist: "Robin Schulz & Lilly Wood and The Prick", title: "Prayer In C" },
+  { artist: "Zoe Wees", title: "Control" },
+  { artist: "Nico Santos", title: "Rooftop" },
+  { artist: "Álvaro Soler", title: "Sofia" },
+  { artist: "Mero", title: "Baller los" },
+  { artist: "Capital Bra", title: "Cherry Lady" },
+  { artist: "Bonez MC & RAF Camora", title: "Palmen aus Plastik" },
+  { artist: "The Weeknd", title: "Blinding Lights" },
+  { artist: "Harry Styles", title: "As It Was" },
+  { artist: "Miley Cyrus", title: "Flowers" },
+  { artist: "Ed Sheeran", title: "Shape of You" },
+  { artist: "Billie Eilish", title: "BIRDS OF A FEATHER" },
+  { artist: "Sabrina Carpenter", title: "Please Please Please" },
+  { artist: "Chappell Roan", title: "Good Luck, Babe!" },
+  { artist: "Teddy Swims", title: "Lose Control" },
+  { artist: "Tate McRae", title: "greedy" },
+  { artist: "Imagine Dragons", title: "Believer" },
+  { artist: "Coldplay", title: "Viva La Vida" },
+  { artist: "Adele", title: "Rolling in the Deep" },
+  { artist: "Queen", title: "Bohemian Rhapsody" },
+  { artist: "a-ha", title: "Take On Me" },
+  { artist: "Fleetwood Mac", title: "Dreams" },
+  { artist: "David Kushner", title: "Daylight" },
+  { artist: "Måneskin", title: "Beggin'" },
+  { artist: "Glass Animals", title: "Heat Waves" },
+  { artist: "Tones and I", title: "Dance Monkey" },
+  { artist: "Gigi D'Agostino", title: "L'amour toujours" },
+  { artist: "Alphaville", title: "Forever Young" },
+  { artist: "Die Toten Hosen", title: "Tage wie diese" },
+  { artist: "Herbert Grönemeyer", title: "Mensch" },
+  { artist: "Tim Bendzko", title: "Nur noch kurz die Welt retten" }
+];
+
+let SONGS = FALLBACK_SONGS.slice();
+let chartSource = 'offline';
+
+const DURATIONS = [0.1, 1, 3, 5, 8, 10, 15];
+
+let currentSong = null, currentTrack = null;
+let attempt = 0, gameOver = false, isPlaying = false;
+let streak = 0;
+let stats = { played: 0, wins: 0 };
+let playTimer, progressTimer, playStart = 0;
+let currentLang = 'DE';
+let lastSongIndex = -1;
+let roundId = 0;
+
+const audio = new Audio();
+audio.preload = 'auto';
+audio.crossOrigin = 'anonymous';
+
+const TRANSLATIONS = {
+  DE: {
+    instruction: "Drehe den Ton auf und tippe zum Starten!",
+    loading: "Song wird geladen…",
+    loadError: "Song konnte nicht geladen werden — versuch's mit „Nächster Song“.",
+    placeholder: "Suchen nach Interpret oder Titel...",
+    skip: "Skip",
+    submit: "Submit",
+    won: "Richtig erraten!",
+    lost: "Leider falsch!",
+    fullPlay: "▶ Vorschau hören / Pause",
+    next: "Nächster Song",
+    skippedText: "Übersprungen",
+    tagline: "{n} Hits aus den deutschen Charts",
+    rank: "Listenplatz #{n}",
+    infoTitle: "Über TOP 500 GERMANY",
+    infoText: "TOP 500 GERMANY ist ein Musik-Rätselspiel mit Hits aus den deutschen Charts. Höre kurze Schnipsel, errate den Titel und schalte mit jedem Versuch mehr Sekunden frei! Vorschau und Cover werden live von Apple Music geladen.",
+    helpTitle: "Wie man spielt",
+    helpText: "1. Drücke Play für einen Schnipsel.<br>2. Errate Interpret und Titel.<br>3. Falsche Versuche schalten mehr Zeit frei (0.1s, 1s, 3s, 5s, 8s, 10s, 15s).",
+    statsTitle: "Statistik",
+    statPlayed: "Gespielt",
+    statWins: "Gewonnen",
+    statRate: "Gewinnrate"
+  },
+  EN: {
+    instruction: "Turn up the volume and tap to start!",
+    loading: "Loading song…",
+    loadError: "Couldn't load that song — try \"Next Song\".",
+    placeholder: "Search for artist or title...",
+    skip: "Skip",
+    submit: "Submit",
+    won: "Correct guess!",
+    lost: "Game over!",
+    fullPlay: "▶ Play preview / Pause",
+    next: "Next Song",
+    skippedText: "Skipped",
+    tagline: "{n} hits from the German charts",
+    rank: "List rank #{n}",
+    infoTitle: "About TOP 500 GERMANY",
+    infoText: "TOP 500 GERMANY is a music guessing game with hits from the German charts. Listen to snippets, guess the track, and unlock more seconds with each attempt! Previews and covers are loaded live from Apple Music.",
+    helpTitle: "How to Play",
+    helpText: "1. Press Play for a snippet.<br>2. Guess artist and title.<br>3. Incorrect guesses unlock more time (0.1s, 1s, 3s, 5s, 8s, 10s, 15s).",
+    statsTitle: "Statistics",
+    statPlayed: "Played",
+    statWins: "Wins",
+    statRate: "Win Rate"
+  },
+  RU: {
+    instruction: "Включите звук и нажмите для старта!",
+    loading: "Загрузка трека…",
+    loadError: "Не удалось загрузить трек — нажмите «Следующий трек».",
+    placeholder: "Поиск исполнителя или трека...",
+    skip: "Пропустить",
+    submit: "Ответить",
+    won: "Правильно!",
+    lost: "Неугадано!",
+    fullPlay: "▶ Превью / Пауза",
+    next: "Следующий трек",
+    skippedText: "Пропущено",
+    tagline: "{n} хитов из немецких чартов",
+    rank: "Место в списке #{n}",
+    infoTitle: "О TOP 500 GERMANY",
+    infoText: "TOP 500 GERMANY — музыкальная угадайка с хитами из немецких чартов. Слушайте отрывки, угадывайте треки и открывайте больше секунд! Превью и обложки загружаются из Apple Music.",
+    helpTitle: "Как играть",
+    helpText: "1. Нажмите Play для прослушивания.<br>2. Угадайте исполнителя и трек.<br>3. Ошибки открывают больше времени (0.1с, 1с, 3с, 5с, 8с, 10с, 15с).",
+    statsTitle: "Статистика",
+    statPlayed: "Сыграно",
+    statWins: "Побед",
+    statRate: "% Побед"
+  }
+};
+
+/* ---------- Live-Charts (Apple Music Top 100 Deutschland) ---------- */
+async function loadLiveChart() {
+  try {
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch('https://rss.applemarketingtools.com/api/v2/de/music/most-played/100/songs.json', { signal: ctrl.signal });
+    clearTimeout(to);
+    if (!res.ok) return;
+    const data = await res.json();
+    const list = (data.feed && data.feed.results) || [];
+    const seen = new Set();
+    const mapped = [];
+    for (const r of list) {
+      if (!r.artistName || !r.name) continue;
+      const key = (r.artistName + '|' + r.name).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      mapped.push({
+        artist: r.artistName,
+        title: r.name,
+        cover: r.artworkUrl100 ? r.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb') : null
+      });
+    }
+    if (mapped.length >= 50) {
+      SONGS = mapped;
+      chartSource = 'live';
+    }
+  } catch (e) { /* Offline-Liste bleibt aktiv */ }
+}
+
+/* ---------- Vorschau & Cover über die iTunes Search API ---------- */
+const trackCache = new Map();
+
+function cleanTitle(t) {
+  return t.replace(/\(.*?\)|\[.*?\]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function norm(s) {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\u0400-\u04FF]+/g, ' ').trim();
+}
+
+function lookupTrack(song) {
+  const key = `${song.artist}|${song.title}`.toLowerCase();
+  if (trackCache.has(key)) return trackCache.get(key);
+
+  const p = (async () => {
+    try {
+      const mainArtist = song.artist.split(/ feat\.| ft\.| & |, | x /i)[0].trim();
+      const term = `${mainArtist} ${cleanTitle(song.title)}`;
+      const url = `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&country=DE&limit=12`;
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 6000);
+      const res = await fetch(url, { signal: ctrl.signal });
+      clearTimeout(to);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const results = (data.results || []).filter(r => r.previewUrl);
+      const nt = norm(cleanTitle(song.title));
+      const na = norm(mainArtist);
+      const best =
+        results.find(r => norm(r.trackName).includes(nt) && norm(r.artistName).includes(na)) ||
+        results.find(r => norm(r.trackName).includes(nt));
+      if (!best) return null;
+      return {
+        preview: best.previewUrl,
+        cover: best.artworkUrl100 ? best.artworkUrl100.replace('100x100bb', '600x600bb') : null
+      };
+    } catch (e) {
+      return null;
+    }
+  })();
+
+  trackCache.set(key, p);
+  return p;
+}
+
+function loadAudio(src) {
+  return new Promise((resolve) => {
+    let done = false;
+    const fin = (ok) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      audio.removeEventListener('canplay', onOk);
+      audio.removeEventListener('error', onErr);
+      resolve(ok);
+    };
+    const onOk = () => fin(true);
+    const onErr = () => fin(false);
+    const timer = setTimeout(() => fin(false), 7000);
+    audio.addEventListener('canplay', onOk);
+    audio.addEventListener('error', onErr);
+    audio.src = src;
+    audio.load();
+  });
+}
+
+async function pickAndLoadSong() {
+  const tried = new Set();
+  let rounds = 0;
+  while (rounds < 10) {
+    rounds++;
+    let idx, guard = 0;
+    do {
+      idx = Math.floor(Math.random() * SONGS.length);
+      guard++;
+    } while ((idx === lastSongIndex || tried.has(idx)) && guard < 40);
+    tried.add(idx);
+
+    const song = SONGS[idx];
+    const track = await lookupTrack(song);
+    if (!track || !track.preview) continue;
+    const ok = await loadAudio(track.preview);
+    if (!ok) continue;
+
+    currentSong = song;
+    currentSong.rank = idx + 1;
+    currentTrack = track;
+    lastSongIndex = idx;
+    return true;
+  }
+  return false;
+}
+
+function placeholderCover(song) {
+  const match = song.title.match(/[A-Za-zА-Яа-я0-9]/);
+  const letter = (match ? match[0] : 'T').toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="0.5" stop-color="#dd0000"/><stop offset="1" stop-color="#ffce00"/></linearGradient></defs>
+<rect width="200" height="200" fill="url(#g)"/>
+<text x="100" y="135" font-family="Impact, sans-serif" font-size="100" fill="#fff" text-anchor="middle">${letter}</text>
+</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+/* ---------- UI-Aufbau ---------- */
+const attemptsContainer = document.getElementById('attemptsContainer');
+
+function fmtDur(d) {
+  return String(d).replace('.', currentLang === 'EN' ? '.' : ',') + (currentLang === 'RU' ? 'с' : 's');
+}
+
+function renderAttemptBoxes() {
+  attemptsContainer.innerHTML = '';
+  DURATIONS.forEach((d, i) => {
+    const box = document.createElement('div');
+    box.className = 'attempt-box' + (i === 0 ? ' active' : '');
+    box.innerHTML = `<span class="n">${i + 1}</span><span class="lbl"></span><span class="dur">${fmtDur(d)}</span>`;
+    attemptsContainer.appendChild(box);
+  });
+}
+
+function markActiveAttempt() {
+  document.querySelectorAll('.attempt-box').forEach((b, i) => {
+    b.classList.toggle('active', !gameOver && i === attempt);
+  });
+  document.querySelectorAll('.timeline-segment').forEach((s, i) => {
+    s.classList.toggle('reached', i <= attempt);
+  });
+}
+
+const totalTime = DURATIONS[DURATIONS.length - 1];
+const timelineBar = document.getElementById('timelineBar');
+DURATIONS.forEach((d, i) => {
+  const seg = document.createElement('div');
+  seg.className = 'timeline-segment';
+  const prev = i === 0 ? 0 : DURATIONS[i - 1];
+  seg.style.width = ((d - prev) / totalTime * 100) + '%';
+  timelineBar.insertBefore(seg, document.getElementById('timelineProgress'));
+});
+
+['eqL', 'eqR'].forEach((id) => {
+  const el = document.getElementById(id);
+  for (let i = 0; i < 6; i++) {
+    const b = document.createElement('i');
+    b.style.animationDelay = (i * 0.13 + (id === 'eqR' ? 0.2 : 0)) + 's';
+    b.style.animationDuration = (0.7 + (i % 3) * 0.2) + 's';
+    el.appendChild(b);
+  }
+});
+
+function formatTime(sec) {
+  if (sec < 1) return '0:00.' + Math.round(sec * 10);
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function setPlayingUI(on) {
+  isPlaying = on;
+  document.getElementById('vinyl').classList.toggle('spin', on);
+  document.getElementById('eqL').classList.toggle('on', on);
+  document.getElementById('eqR').classList.toggle('on', on);
+  document.getElementById('playIcon').innerHTML = on
+    ? '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>'
+    : '<path d="M8 5v14l11-7z"/>';
+}
+
+function updateStreakUI() {
+  document.getElementById('streakCount').textContent = streak;
+  document.getElementById('streakBadge').classList.toggle('active', streak > 0);
+}
+
+function updateLanguageUI() {
+  const t = TRANSLATIONS[currentLang];
+  document.getElementById('btnLang').textContent = currentLang;
+  document.documentElement.lang = currentLang.toLowerCase();
+  if (!gameOver) document.getElementById('txtInstruction').textContent = t.instruction;
+  document.getElementById('guessInput').placeholder = t.placeholder;
+  document.getElementById('skipBtn').textContent = t.skip;
+  document.getElementById('submitBtn').textContent = t.submit;
+  document.getElementById('fullPlayBtn').textContent = t.fullPlay;
+  document.getElementById('nextBtn').textContent = t.next;
+  document.getElementById('txtTagline').textContent = t.tagline.replace('{n}', SONGS.length) + (chartSource === 'live' ? ' · LIVE' : '');
+  document.getElementById('liveDot').classList.toggle('on', chartSource === 'live');
+  document.querySelectorAll('.attempt-box .dur').forEach((el, i) => { el.textContent = fmtDur(DURATIONS[i]); });
+}
+
+/* ---------- Spiellogik ---------- */
+function stopPlayback() {
+  audio.pause();
+  try { audio.currentTime = 0; } catch (e) {}
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+  setPlayingUI(false);
+}
+
+audio.addEventListener('play', () => setPlayingUI(true));
+audio.addEventListener('pause', () => setPlayingUI(false));
+audio.addEventListener('ended', () => setPlayingUI(false));
+
+function playSnippet() {
+  if (!currentSong || gameOver) return;
+  if (isPlaying) { stopPlayback(); return; }
+
+  const maxSec = DURATIONS[attempt];
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+  document.getElementById('timelineProgress').style.width = '0%';
+  document.getElementById('currentTime').textContent = formatTime(0);
+  try { audio.currentTime = 0; } catch (e) {}
+
+  const begin = () => {
+    playStart = performance.now();
+    progressTimer = setInterval(() => {
+      const elapsed = Math.min((performance.now() - playStart) / 1000, maxSec);
+      document.getElementById('timelineProgress').style.width = Math.min(100, elapsed / totalTime * 100) + '%';
+      document.getElementById('currentTime').textContent = formatTime(elapsed);
+      if (elapsed >= maxSec) clearInterval(progressTimer);
+    }, 40);
+    playTimer = setTimeout(stopPlayback, maxSec * 1000);
+  };
+
+  const p = audio.play();
+  if (p && p.then) p.then(begin).catch(() => setPlayingUI(false));
+  else begin();
+}
+
+function handleGuess(userGuess, isSkip = false) {
+  if (gameOver || !currentSong) return;
+
+  const t = TRANSLATIONS[currentLang];
+  const boxes = document.querySelectorAll('.attempt-box');
+  const box = boxes[attempt];
+  const lbl = box.querySelector('.lbl');
+
+  const fullName = `${currentSong.artist} - ${currentSong.title}`;
+  const isCorrect = !isSkip && userGuess.toLowerCase() === fullName.toLowerCase();
+
+  if (isSkip) {
+    lbl.textContent = t.skippedText;
+    box.classList.add('skipped');
+  } else {
+    lbl.textContent = userGuess;
+    box.classList.add(isCorrect ? 'correct' : 'wrong');
+  }
+
+  if (isCorrect) {
+    endGame(true);
+  } else {
+    attempt++;
+    if (attempt >= DURATIONS.length) {
+      endGame(false);
+    } else {
+      document.getElementById('maxTime').textContent = formatTime(DURATIONS[attempt]);
+      markActiveAttempt();
+    }
+  }
+
+  document.getElementById('guessInput').value = '';
+  document.getElementById('clearBtn').style.display = 'none';
+  document.getElementById('suggestions').classList.remove('open');
+}
+
+function endGame(won) {
+  gameOver = true;
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+  markActiveAttempt();
+
+  const t = TRANSLATIONS[currentLang];
+  stats.played++;
+  if (won) { stats.wins++; streak++; } else { streak = 0; }
+  updateStreakUI();
+
+  document.getElementById('inputContainer').style.display = 'none';
+  document.getElementById('actionBtns').style.display = 'none';
+  document.getElementById('txtInstruction').textContent = '';
+
+  const resBox = document.getElementById('resultBox');
+  resBox.classList.remove('win', 'lose');
+  resBox.classList.add('show', won ? 'win' : 'lose');
+  document.getElementById('resultStatus').textContent = (won ? '🎉 ' : '❌ ') + (won ? t.won : t.lost);
+  document.getElementById('resultTitle').textContent = `${currentSong.artist} - ${currentSong.title}`;
+  document.getElementById('rankChip').textContent = t.rank.replace('{n}', currentSong.rank);
+
+  const coverUrl = currentSong.cover || (currentTrack && currentTrack.cover) || placeholderCover(currentSong);
+  document.getElementById('coverImg').src = coverUrl;
+  const label = document.getElementById('vinylLabel');
+  label.style.backgroundImage = `url("${coverUrl}")`;
+  label.classList.add('cover');
+
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+}
+
+function toggleFullPlay() {
+  if (audio.paused) audio.play().catch(() => {});
+  else audio.pause();
+}
+
+async function startNewGame() {
+  gameOver = false;
+  attempt = 0;
+  roundId++;
+  const myRound = roundId;
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+  audio.pause();
+  setPlayingUI(false);
+
+  renderAttemptBoxes();
+  markActiveAttempt();
+
+  const label = document.getElementById('vinylLabel');
+  label.style.backgroundImage = '';
+  label.classList.remove('cover');
+
+  document.getElementById('resultBox').classList.remove('show', 'win', 'lose');
+  document.getElementById('inputContainer').style.display = 'block';
+  document.getElementById('actionBtns').style.display = 'flex';
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('clearBtn').style.display = 'none';
+  document.getElementById('currentTime').textContent = '0:00.0';
+  document.getElementById('maxTime').textContent = formatTime(DURATIONS[0]);
+  document.getElementById('timelineProgress').style.width = '0%';
+  document.getElementById('playBtn').disabled = true;
+  document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].loading;
+
+  const ok = await pickAndLoadSong();
+  if (myRound !== roundId) return;
+
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('guessInput').disabled = false;
+  document.getElementById('txtInstruction').textContent = ok
+    ? TRANSLATIONS[currentLang].instruction
+    : TRANSLATIONS[currentLang].loadError;
+}
+
+/* ---------- Events ---------- */
+document.getElementById('playBtn').addEventListener('click', playSnippet);
+document.getElementById('fullPlayBtn').addEventListener('click', toggleFullPlay);
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const val = document.getElementById('guessInput').value.trim();
+  if (val) handleGuess(val);
+});
+document.getElementById('skipBtn').addEventListener('click', () => handleGuess('', true));
+document.getElementById('nextBtn').addEventListener('click', startNewGame);
+
+document.getElementById('btnLang').addEventListener('click', () => {
+  currentLang = currentLang === 'DE' ? 'EN' : currentLang === 'EN' ? 'RU' : 'DE';
+  updateLanguageUI();
+});
+
+const input = document.getElementById('guessInput');
+const suggestions = document.getElementById('suggestions');
+const clearBtn = document.getElementById('clearBtn');
+
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const val = input.value.trim();
+    if (val) handleGuess(val);
+  }
+});
+
+input.addEventListener('input', () => {
+  const val = input.value.trim().toLowerCase();
+  clearBtn.style.display = val ? 'block' : 'none';
+  suggestions.innerHTML = '';
+  if (!val) { suggestions.classList.remove('open'); return; }
+
+  const matches = SONGS.filter(s =>
+    `${s.artist} - ${s.title}`.toLowerCase().includes(val) ||
+    s.title.toLowerCase().includes(val)
+  );
+
+  matches.slice(0, 8).forEach(m => {
+    const fullName = `${m.artist} - ${m.title}`;
+    const div = document.createElement('div');
+    div.textContent = fullName;
+    div.addEventListener('click', () => {
+      input.value = fullName;
+      suggestions.classList.remove('open');
+    });
+    suggestions.appendChild(div);
+  });
+
+  suggestions.classList.toggle('open', matches.length > 0);
+});
+
+clearBtn.addEventListener('click', () => {
+  input.value = '';
+  clearBtn.style.display = 'none';
+  suggestions.classList.remove('open');
+});
+
+const overlay = document.getElementById('modalOverlay');
+const modalBody = document.getElementById('modalBody');
+
+function openModal(html) {
+  modalBody.innerHTML = html;
+  overlay.classList.add('active');
+}
+document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('active'));
+overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
+
+document.getElementById('btnInfo').addEventListener('click', () => {
+  const t = TRANSLATIONS[currentLang];
+  openModal(`<h3>${t.infoTitle}</h3><p>${t.infoText}</p>`);
+});
+
+document.getElementById('btnStats').addEventListener('click', () => {
+  const t = TRANSLATIONS[currentLang];
+  const rate = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+  openModal(`
+    <h3>${t.statsTitle}</h3>
+    <div class="stat-grid">
+      <div><div class="stat-val">${stats.played}</div><div class="stat-lbl">${t.statPlayed}</div></div>
+      <div><div class="stat-val">${stats.wins}</div><div class="stat-lbl">${t.statWins}</div></div>
+      <div><div class="stat-val">${rate}%</div><div class="stat-lbl">${t.statRate}</div></div>
+    </div>
+  `);
+});
+
+document.getElementById('btnHelp').addEventListener('click', () => {
+  const t = TRANSLATIONS[currentLang];
+  openModal(`<h3>${t.helpTitle}</h3><p>${t.helpText}</p>`);
+});
+
+/* ---------- Start ---------- */
+(async function init() {
+  renderAttemptBoxes();
+  updateLanguageUI();
+  document.getElementById('playBtn').disabled = true;
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].loading;
+  await loadLiveChart();
+  updateLanguageUI();
+  startNewGame();
+})();
+</script>
+</body>
+</html>
