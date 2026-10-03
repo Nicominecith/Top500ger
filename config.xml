@@ -7,7 +7,7 @@
   <allow-intent href="http://*/*" />
   <allow-intent href="https://*/*" />
   <preference name="Orientation" value="portrait" />
-  <preference name="BackgroundColor" value="0xff0f0e16" />
+  <preference name="BackgroundColor" value="#FF0F0E16" />
   <platform name="android">
     <icon density="mdpi" src="res/icon-mdpi.png" />
     <icon density="hdpi" src="res/icon-hdpi.png" />
