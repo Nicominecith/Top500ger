@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DVRST HEARDLE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap');
+
+  :root {
+    --bg: #0d0d0f;
+    --surface: #16161a;
+    --surface-hover: #212126;
+    --border: #23232a;
+    --border-light: #32323d;
+    --text: #ffffff;
+    --text-muted: #9494a0;
+    --correct: #2be08a;
+    --wrong: #ff4d6d;
+    --skipped: #60606e;
+    --streak-active: #ff9500;
+    --accent: #ff3366;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 16px 16px 60px 16px; /* Platz unten für das Banner */
+  }
+
+  .app {
+    width: 100%;
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  header { margin-bottom: 24px; }
+
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .top-icon, .lang-btn, .streak-badge {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    height: 36px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .top-icon, .lang-btn {
+    width: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+
+  .top-icon:hover, .lang-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-light);
+  }
+
+  .streak-badge {
+    padding: 0 12px;
+    gap: 6px;
+    user-select: none;
+  }
+
+  .streak-badge.active {
+    color: var(--streak-active);
+    border-color: rgba(255, 149, 0, 0.4);
+    background: rgba(255, 149, 0, 0.1);
+  }
+
+  .top-icon:active, .lang-btn:active { transform: scale(0.92); }
+
+  .title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+    background: linear-gradient(135deg, #fff 0%, #a5a5b5 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .attempts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .attempt-box {
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    justify-content: space-between;
+    transition: all 0.2s ease;
+  }
+
+  .attempt-box.correct {
+    border-color: var(--correct);
+    background: rgba(43,224,138,0.12);
+    color: var(--correct);
+    box-shadow: 0 0 12px rgba(43,224,138,0.15);
+  }
+  .attempt-box.wrong {
+    border-color: var(--wrong);
+    background: rgba(255,77,109,0.12);
+    color: var(--wrong);
+    box-shadow: 0 0 12px rgba(255,77,109,0.15);
+  }
+  .attempt-box.skipped {
+    border-color: var(--border-light);
+    background: rgba(255,255,255,0.02);
+    color: var(--text-muted);
+  }
+
+  .player-section {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .instruction {
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .chevron { color: var(--text-muted); font-size: 12px; margin-bottom: 12px; opacity: 0.6; }
+
+  .timeline-wrapper {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+
+  .timeline-bar {
+    width: 100%;
+    height: 14px;
+    background: var(--surface);
+    border-radius: 7px;
+    display: flex;
+    gap: 3px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+
+  .timeline-segment {
+    height: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border-right: 1px solid var(--bg);
+  }
+
+  .timeline-progress {
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 0%;
+    background: linear-gradient(90deg, #ffffff, #a5a5b5);
+    border-radius: 7px;
+    pointer-events: none;
+    transition: width 0.05s linear;
+  }
+
+  .play-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 24px;
+  }
+
+  .time-label { font-size: 13px; font-weight: 600; width: 55px; color: var(--text-muted); }
+  .time-label.right { text-align: right; }
+
+  .big-play-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--text);
+    background: var(--surface);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  }
+  .big-play-btn:hover {
+    transform: scale(1.05);
+    background: var(--text);
+    color: var(--bg);
+  }
+  .big-play-btn:active { transform: scale(0.95); }
+  .big-play-btn svg { width: 22px; height: 22px; fill: currentColor; margin-left: 2px; }
+
+  .input-container { position: relative; width: 100%; }
+
+  .search-box {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 40px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+  }
+  .search-box:focus {
+    border-color: var(--border-light);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .clear-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    display: none;
+  }
+
+  .suggestions {
+    position: absolute;
+    bottom: 100%;
+    left: 0; right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+    margin-bottom: 6px;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+  }
+  .suggestions.open { display: block; }
+  .suggestions div { padding: 12px 16px; font-size: 14px; cursor: pointer; border-bottom: 1px solid var(--border); }
+  .suggestions div:last-child { border-bottom: none; }
+  .suggestions div:hover { background: var(--surface-hover); }
+
+  .action-btns { display: flex; gap: 10px; margin-top: 10px; width: 100%; }
+
+  .btn-action {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn-action:hover {
+    background: var(--surface-hover);
+    border-color: var(--border-light);
+  }
+
+  /* Result Box jetzt oben drüber positioniert ohne Timeline zu verdecken */
+  .result-box {
+    text-align: center;
+    margin-top: 16px;
+    padding: 20px;
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    display: none;
+    width: 100%;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  }
+  .result-box.show { display: block; animation: fadeIn 0.3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .cover-art-container {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto 14px auto;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  .cover-art-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .modal-overlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+  .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    padding: 24px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  }
+  .modal-content h3 { font-size: 18px; margin-bottom: 12px; font-weight: 700; }
+  .modal-content p { font-size: 14px; color: var(--text-muted); line-height: 1.5; margin-bottom: 12px; }
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    background: none; border: none;
+    color: var(--text-muted); font-size: 18px; cursor: pointer;
+  }
+
+  .stat-grid { display: flex; justify-content: space-around; text-align: center; margin: 20px 0; }
+  .stat-val { font-size: 24px; font-weight: 700; color: var(--text); }
+  .stat-lbl { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  #scWidget {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    left: -9999px;
+    opacity: 0.01;
+  }
+
+  /* Full-width Footer Banner im Songless Style */
+  .songless-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #08080a;
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+    z-index: 50;
+  }
+
+  .songless-footer a {
+    color: var(--text-muted);
+    text-decoration: underline;
+  }
+
+  @media (max-height: 700px) {
+    header { margin-bottom: 12px; }
+    .attempts-container { gap: 6px; margin-bottom: 12px; }
+    .attempt-box { height: 36px; font-size: 13px; }
+    .timeline-wrapper { margin-bottom: 12px; }
+    .play-controls { margin-bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="top-bar">
+      <button class="lang-btn" id="btnLang">DE</button>
+      <button class="top-icon" id="btnInfo" title="Info">i</button>
+      <div class="streak-badge" id="streakBadge" title="Aktuelle Erfolgssträhne">
+        🔥 <span id="streakCount">0</span>
+      </div>
+      <div class="title">DVRST HEARDLE</div>
+      <button class="top-icon" id="btnStats" title="Statistik">📊</button>
+      <button class="top-icon" id="btnHelp" title="Hilfe">?</button>
+    </div>
+  </header>
+
+  <div class="attempts-container" id="attemptsContainer"></div>
+
+  <div class="player-section">
+    <div class="instruction" id="txtInstruction">Drehe den Ton auf und tippe zum Starten!</div>
+    <div class="chevron">∨</div>
+
+    <div class="timeline-wrapper">
+      <div class="timeline-bar" id="timelineBar">
+        <div class="timeline-progress" id="timelineProgress"></div>
+      </div>
+    </div>
+
+    <div class="play-controls">
+      <span class="time-label" id="currentTime">0:00.0</span>
+      <button class="big-play-btn" id="playBtn">
+        <svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <span class="time-label right" id="maxTime">0:00.1</span>
+    </div>
+
+    <div class="input-container" id="inputContainer">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-box" id="guessInput" placeholder="Suchen nach Interpret oder Titel..." autocomplete="off">
+      <span class="clear-icon" id="clearBtn">✕</span>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+
+    <div class="action-btns" id="actionBtns">
+      <button class="btn-action" id="skipBtn">Skip</button>
+      <button class="btn-action" id="submitBtn">Submit</button>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="cover-art-container" id="coverContainer">
+        <img id="coverImg" src="" alt="Album Cover">
+      </div>
+      <div id="resultStatus" style="font-weight:700; font-size:18px; margin-bottom:6px;"></div>
+      <div id="resultTitle" style="color:var(--text); font-size:15px; font-weight:600; margin-bottom:16px;"></div>
+      <button class="btn-action" id="fullPlayBtn" style="margin-bottom:10px; background:var(--bg);">▶ Vollversion Abspielen / Pause</button>
+      <button class="btn-action" id="nextBtn" style="background:var(--text); color:var(--bg);">Nächster Song</button>
+    </div>
+  </div>
+</div>
+
+<!-- Full-width Songless Footer Banner -->
+<div class="songless-footer">
+  Designed and coded by Nicominecith • songs from <a href="https://soundcloud.com" target="_blank" rel="noopener">soundcloud.com</a>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<iframe id="scWidget"
+  src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/1041838870&auto_play=false&buying=false&sharing=false&download=false&show_artwork=false&show_playcount=false&show_user=false"
+  allow="autoplay *; encrypted-media *"></iframe>
+
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script>
+const SONGS = [
+  { artist: "DVRST", title: "Close Eyes", url: "https://soundcloud.com/dvrstmusic/close-eyes" },
+  { artist: "DVRST", title: "Close Eyes (Slowed + Reverb)" },
+  { artist: "DVRST", title: "Dream Space", url: "https://soundcloud.com/dvrstmusic/dream-space" },
+  { artist: "DVRST feat. OBLXKQ", title: "Endless Love" },
+  { artist: "DVRST", title: "REASON TO LIVE", url: "https://soundcloud.com/dvrstmusic/reason-to-live" },
+  { artist: "DVRST", title: "Autumn Wind" },
+  { artist: "DVRST", title: "Sunrise" },
+  { artist: "DVRST", title: "Motion", url: "https://soundcloud.com/dvrstmusic/motion" },
+  { artist: "DVRST", title: "A Little Story", url: "https://soundcloud.com/dvrstmusic/a-little-story" },
+  { artist: "DVRST", title: "Not Sleep At Night", url: "https://soundcloud.com/dvrstmusic/not_sleep_at_night" },
+  { artist: "DVRST", title: "I'M SORRY", url: "https://soundcloud.com/dvrstmusic/im-sorry" },
+  { artist: "DVRST", title: "Bloody Morning" },
+  { artist: "DVRST", title: "Square Dream" },
+  { artist: "DVRST feat. Bright Moon", title: "No More" },
+  { artist: "DVRST feat. Bright Moon", title: "Decapitator" },
+  { artist: "DVRST", title: "Upsilon" },
+  { artist: "DVRST feat. $atori Zoom", title: "Still Breathing" },
+  { artist: "DVRST & Scriptz", title: "Nephilim", url: "https://soundcloud.com/dvrstmusic/dvrst-scriptz-nephilim" },
+  { artist: "DVRST, Igor Sklyar & Atomic Heart", title: "Komarovo (Phonk Remix)" },
+  { artist: "DVRST, Igor Sklyar & Atomic Heart", title: "Komarovo (DnB Remix)" },
+  { artist: "DVRST, safetypleace & Nia.wave", title: "Rays of Serenity" },
+  { artist: "DVRST feat. Kingpin Skinny Pimp", title: "Thinkin of a Drive By" },
+  { artist: "DVRST & kid wiki", title: "You" },
+  { artist: "DVRST", title: "What, Me Worry? (Remix)" },
+  { artist: "DVRST feat. Øneheart", title: "Never Leave" },
+  { artist: "DVRST feat. Monrxe", title: "Track 19.02" },
+  { artist: "DVRST feat. Scarlxrd", title: "Always Want Me" },
+  { artist: "DVRST feat. NICK PROSPER", title: "Wasting Time With You" },
+  { artist: "DVRST feat. 6 Senz", title: "BIRTH" },
+  { artist: "DVRST feat. Pr1nce666", title: "Hyperpop" },
+  { artist: "DVRST", title: "Hyperpop (Remix)" },
+  { artist: "DVRST feat. 6YNTHMANE & ANTICXLTXRE", title: "Will Be Soon" },
+  { artist: "DVRST feat. Jarren Benton", title: "Gimmie The Loot (Remix)" },
+  { artist: "DVRST feat. monrxe", title: "Darling" },
+  { artist: "DVRST feat. JOINTMANE", title: "HOLLY" },
+  { artist: "DVRST feat. Лиза Садриева", title: "Чистый лист" },
+  { artist: "DVRST", title: "Fight!", url: "https://soundcloud.com/dvrstmusic/dvrst-fight-6" },
+  { artist: "DVRST", title: "Strayed", url: "https://soundcloud.com/dvrstmusic/strayed" },
+  { artist: "DVRST", title: "Ancient" },
+  { artist: "DVRST", title: "Tell Me What" },
+  { artist: "DVRST", title: "Scape" },
+  { artist: "DVRST", title: "Broken Pieces" },
+  { artist: "DVRST", title: "Calm Before the Storm" },
+  { artist: "DVRST", title: "This Place is Near You" },
+  { artist: "DVRST", title: "SHE IS HYPERACTIVE" },
+  { artist: "DVRST", title: "Before End" },
+  { artist: "DVRST feat. Смешарики", title: "Aliens" },
+  { artist: "DVRST", title: "Слёзы" },
+  { artist: "DVRST & Polnalyubvi", title: "Falling Stars" },
+  { artist: "DVRST & Øneheart", title: "Every Night" },
+  { artist: "DVRST", title: "Retrospective" },
+  { artist: "DVRST", title: "Feels Like I'm Dyin'" },
+  { artist: "DVRST", title: "Roller Coaster" },
+  { artist: "DVRST", title: "Stick This Tone" },
+  { artist: "DVRST", title: "Whole Block Know" },
+  { artist: "DVRST", title: "In the cut! In the cut!" },
+  { artist: "DVRST & Pharmacist", title: "FROSTY" },
+  { artist: "DVRST", title: "Ridin on Chrome" },
+  { artist: "DVRST", title: "Show Them Golds" },
+  { artist: "DVRST", title: "MASK OFF" },
+  { artist: "DVRST", title: "RUINED" },
+  { artist: "DVRST", title: "Enter Dream Mode" },
+  { artist: "DVRST", title: "SleepRepeat" },
+  { artist: "DVRST feat. Scarlxrd", title: "Missing Antidxte" },
+  { artist: "DVRST feat. Jupiluxe", title: "Beat It!" },
+  { artist: "DVRST", title: "Game Over" },
+  { artist: "DVRST", title: "Powerup.exe" },
+  { artist: "DVRST & lxst cxntury", title: "MERCURY" },
+  { artist: "DVRST feat. CLOUDYMANE & Devilish Trio", title: "Wreek The World" },
+  { artist: "DVRST, Igor Sklyar & Atomic Heart", title: "Interference" },
+  { artist: "DVRST", title: "GoldPhonk" },
+  { artist: "DVRST", title: "GlowPhonk" },
+  { artist: "DVRST", title: "GangPhonk" },
+  { artist: "DVRST feat. leah julia", title: "Until The Stars Collide" },
+  { artist: "DVRST", title: "Stay Alone" },
+  { artist: "DVRST", title: "Stay Alone (Slowed + Reverb)" },
+  { artist: "DVRST", title: "I Hate You I Love You" },
+  { artist: "DVRST", title: "U 2" },
+  { artist: "DVRST", title: "Spoon" },
+  { artist: "DVRST", title: "QnA" },
+  { artist: "DVRST", title: "Arcade Madness" },
+  { artist: "DVRST", title: "Die with a Smile on Your Face" },
+  { artist: "DVRST", title: "Walking on Mars" },
+  { artist: "DVRST", title: "Eclipse" },
+  { artist: "DVRST", title: "Fall" },
+  { artist: "DVRST", title: "Elysium" },
+  { artist: "DVRST", title: "Life Is Short" },
+  { artist: "DVRST", title: "Other Planet" },
+  { artist: "DVRST", title: "Always Alone" },
+  { artist: "DVRST", title: "Intro" },
+  { artist: "DVRST", title: "Every Time Again" },
+  { artist: "DVRST", title: "I Wish You Sweet Dreams" },
+  { artist: "DVRST", title: "Ooh Nuttin" },
+  { artist: "DVRST", title: "Byte-sized Memories" },
+  { artist: "DVRST", title: "WCGG" },
+  { artist: "DVRST", title: "Arcade Dreams" },
+  { artist: "DVRST", title: "Treehouse Secrets" },
+  { artist: "DVRST", title: "We'll Meet Later" },
+  { artist: "DVRST", title: "Runaway" },
+  { artist: "DVRST", title: "After Work" }
+];
+
+const DURATIONS = [0.1, 1, 3, 5, 8, 10, 15];
+
+let currentSong, attempt = 0, widget, gameOver = false, isPlaying = false;
+let streak = 0;
+let stats = { played: 0, wins: 0 };
+let playTimer, progressTimer;
+let currentLang = 'DE';
+let lastSongIndex = -1;
+let roundId = 0;
+let coverPromise = null;
+let widgetErrorPending = null;
+let audioUnlocked = false;
+
+const TRANSLATIONS = {
+  DE: {
+    instruction: "Drehe den Ton auf und tippe zum Starten!",
+    loading: "Song wird geladen…",
+    loadError: "Song konnte nicht geladen werden — versuch's mit „Nächster Song“.",
+    placeholder: "Suchen nach Interpret oder Titel...",
+    skip: "Skip",
+    submit: "Submit",
+    won: "🎉 Richtig Erraten!",
+    lost: "❌ Leider Falsch!",
+    fullPlay: "▶ Vollversion Abspielen / Pause",
+    next: "Nächster Song",
+    skippedText: "Übersprungen",
+    infoTitle: "Über DVRST HEARDLE",
+    infoText: "DVRST HEARDLE ist ein Musik-Rätselspiel. Höre dir kurze Schnipsel an, errate den Titel und schalte mit jedem Versuch mehr Sekunden frei! Cover-Artworks werden live geladen.",
+    helpTitle: "Wie man spielt",
+    helpText: "1. Drücke Play für ein Schnipsel.<br>2. Errate den Titel.<br>3. Falsche Versuche schalten mehr Zeit frei (0.1s, 1s, 3s, 5s, 8s, 10s, 15s).",
+    statsTitle: "Statistik",
+    statPlayed: "Gespielt",
+    statWins: "Gewonnen",
+    statRate: "Gewinnrate"
+  },
+  EN: {
+    instruction: "Turn up the volume and tap to start!",
+    loading: "Loading song…",
+    loadError: "Couldn't load that song — try \"Next Song\".",
+    placeholder: "Search for artist or title...",
+    skip: "Skip",
+    submit: "Submit",
+    won: "🎉 Correct Guess!",
+    lost: "❌ Game Over!",
+    fullPlay: "▶ Play Full Version / Pause",
+    next: "Next Song",
+    skippedText: "Skipped",
+    infoTitle: "About DVRST HEARDLE",
+    infoText: "DVRST HEARDLE is a music guessing game. Listen to snippets, guess the track, and unlock more seconds with each attempt!",
+    helpTitle: "How to Play",
+    helpText: "1. Press Play for a sample.<br>2. Guess the title.<br>3. Incorrect guesses unlock more time (0.1s, 1s, 3s, 5s, 8s, 10s, 15s).",
+    statsTitle: "Statistics",
+    statPlayed: "Played",
+    statWins: "Wins",
+    statRate: "Win Rate"
+  },
+  RU: {
+    instruction: "Включите звук и нажмите для старта!",
+    loading: "Загрузка трека…",
+    loadError: "Не удалось загрузить трек — нажмите «Следующий трек».",
+    placeholder: "Поиск исполнителя или трека...",
+    skip: "Пропустить",
+    submit: "Ответить",
+    won: "🎉 Правильно!",
+    lost: "❌ Неугадано!",
+    fullPlay: "▶ Полная версия / Пауза",
+    next: "Следующий трек",
+    skippedText: "Пропущено",
+    infoTitle: "О DVRST HEARDLE",
+    infoText: "DVRST HEARDLE - музыкальная угадайка. Слушайте отрывки, угадывайте треки и открывайте больше секунд!",
+    helpTitle: "Как играть",
+    helpText: "1. Нажмите Play для прослушивания.<br>2. Угадайте трек.<br>3. Ошибки открывают больше времени (0.1с, 1с, 3с, 5с, 8с, 10с, 15с).",
+    statsTitle: "Статистика",
+    statPlayed: "Сыграно",
+    statWins: "Побед",
+    statRate: "% Побед"
+  }
+};
+
+function slugify(str) {
+  return str
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/['']/g, '')
+    .replace(/[^a-z0-9\u0400-\u04FF]+/gi, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function getSongUrl(song) {
+  return song.url || `https://soundcloud.com/dvrstmusic/${slugify(song.title)}`;
+}
+
+const coverCache = new Map();
+let mbChain = Promise.resolve();
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function queueMB(fn) {
+  const result = mbChain.then(fn, fn);
+  mbChain = result.then(() => sleep(1100), () => sleep(1100));
+  return result;
+}
+
+function sanitizeQuery(str) {
+  return str.replace(/[()[\]{}!?."':+\-~^*\\/]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function imageExists(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const timer = setTimeout(() => resolve(false), 4000);
+    img.onload = () => { clearTimeout(timer); resolve(true); };
+    img.onerror = () => { clearTimeout(timer); resolve(false); };
+    img.src = url;
+  });
+}
+
+async function lookupCoverArt(song) {
+  try {
+    const cleanTitle = sanitizeQuery(song.title.replace(/\(.*?\)/g, ''));
+    if (!cleanTitle) return null;
+    const query = `recording:(${cleanTitle}) AND artist:(DVRST)`;
+    const res = await fetch(`https://musicbrainz.org/ws/2/recording/?query=${encodeURIComponent(query)}&fmt=json&limit=6`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const recordings = data.recordings || [];
+    for (const rec of recordings) {
+      for (const rel of (rec.releases || [])) {
+        const thumb = `https://coverartarchive.org/release/${rel.id}/front-250`;
+        if (await imageExists(thumb)) {
+          return `https://coverartarchive.org/release/${rel.id}/front-500`;
+        }
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function getCoverArt(song) {
+  const key = `${song.artist}|${song.title}`.toLowerCase();
+  if (coverCache.has(key)) return coverCache.get(key);
+  const promise = queueMB(() => lookupCoverArt(song));
+  coverCache.set(key, promise);
+  return promise;
+}
+
+function placeholderCover(song) {
+  const match = song.title.match(/[A-Za-zА-Яа-я0-9]/);
+  const letter = (match ? match[0] : 'D').toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<rect width="200" height="200" fill="#16161a"/>
+<text x="100" y="128" font-family="Inter, sans-serif" font-weight="700" font-size="86" fill="#9494a0" text-anchor="middle" opacity="0.9">${letter}</text>
+</svg>`;
+  return 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+
+const attemptsContainer = document.getElementById('attemptsContainer');
+
+function renderAttemptBoxes() {
+  attemptsContainer.innerHTML = '';
+  DURATIONS.forEach(() => {
+    const box = document.createElement('div');
+    box.className = 'attempt-box';
+    attemptsContainer.appendChild(box);
+  });
+}
+renderAttemptBoxes();
+
+const timelineBar = document.getElementById('timelineBar');
+const totalTime = DURATIONS[DURATIONS.length - 1];
+DURATIONS.forEach(d => {
+  const seg = document.createElement('div');
+  seg.className = 'timeline-segment';
+  seg.style.width = (d / totalTime * 100) + '%';
+  timelineBar.appendChild(seg);
+});
+
+const iframe = document.getElementById('scWidget');
+widget = SC.Widget(iframe);
+
+widget.bind(SC.Widget.Events.ERROR, () => {
+  if (widgetErrorPending) {
+    const resolve = widgetErrorPending;
+    widgetErrorPending = null;
+    resolve(false);
+  }
+});
+
+widget.bind(SC.Widget.Events.PLAY, () => {
+  isPlaying = true;
+  document.getElementById('playIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+});
+
+widget.bind(SC.Widget.Events.PAUSE, () => {
+  isPlaying = false;
+  document.getElementById('playIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+});
+
+widget.bind(SC.Widget.Events.FINISH, () => {
+  isPlaying = false;
+  document.getElementById('playIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+});
+
+widget.bind(SC.Widget.Events.PLAY_PROGRESS, (data) => {
+  if (gameOver || !isPlaying) return;
+  
+  const maxSec = DURATIONS[attempt];
+  const currentSec = data.currentPosition / 1000;
+
+  if (currentSec >= maxSec) {
+    stopPlayback();
+  }
+});
+
+function stopPlayback() {
+  if (!widget) return;
+  widget.pause();
+  widget.seekTo(0);
+  isPlaying = false;
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+  document.getElementById('playIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+}
+
+function tryLoadSong(song) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => finish(false), 5000);
+    function finish(ok) {
+      if (settled) return;
+      settled = true;
+      widgetErrorPending = null;
+      clearTimeout(timer);
+      resolve(ok);
+    }
+    widgetErrorPending = finish;
+    widget.load(getSongUrl(song), {
+      auto_play: false,
+      show_artwork: false,
+      callback: () => finish(true)
+    });
+  });
+}
+
+async function pickAndLoadSong() {
+  const tried = new Set();
+  let ok = false;
+  let rounds = 0;
+  while (!ok && rounds < 14) {
+    rounds++;
+    let idx;
+    let guardCount = 0;
+    do {
+      idx = Math.floor(Math.random() * SONGS.length);
+      guardCount++;
+    } while ((idx === lastSongIndex || tried.has(idx)) && guardCount < 40);
+    tried.add(idx);
+    currentSong = SONGS[idx];
+    lastSongIndex = idx;
+    ok = await tryLoadSong(currentSong);
+  }
+  return ok;
+}
+
+function formatTime(sec) {
+  if (sec < 1) {
+    return '0:00.' + Math.round(sec * 10);
+  }
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s < 10 ? '0' : ''}${s}`;
+}
+
+function updateStreakUI() {
+  const countEl = document.getElementById('streakCount');
+  const badgeEl = document.getElementById('streakBadge');
+  countEl.textContent = streak;
+  badgeEl.classList.toggle('active', streak > 0);
+}
+
+function updateLanguageUI() {
+  const t = TRANSLATIONS[currentLang];
+  document.getElementById('btnLang').textContent = currentLang;
+  if (!gameOver) {
+    document.getElementById('txtInstruction').textContent = t.instruction;
+  }
+  document.getElementById('guessInput').placeholder = t.placeholder;
+  document.getElementById('skipBtn').textContent = t.skip;
+  document.getElementById('submitBtn').textContent = t.submit;
+  document.getElementById('fullPlayBtn').textContent = t.fullPlay;
+  document.getElementById('nextBtn').textContent = t.next;
+}
+
+async function startNewGame() {
+  gameOver = false;
+  isPlaying = false;
+  attempt = 0;
+  coverPromise = null;
+  roundId++;
+  const myRound = roundId;
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+
+  renderAttemptBoxes();
+
+  document.getElementById('resultBox').classList.remove('show');
+  document.getElementById('inputContainer').style.display = 'block';
+  document.getElementById('actionBtns').style.display = 'flex';
+  document.getElementById('guessInput').value = '';
+  document.getElementById('guessInput').disabled = true;
+  document.getElementById('clearBtn').style.display = 'none';
+  document.getElementById('currentTime').textContent = '0:00.0';
+  document.getElementById('maxTime').textContent = formatTime(DURATIONS[0]);
+  document.getElementById('timelineProgress').style.width = '0%';
+  document.getElementById('playIcon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+  document.getElementById('playBtn').disabled = true;
+  document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].loading;
+
+  const ok = await pickAndLoadSong();
+  if (myRound !== roundId) return;
+
+  document.getElementById('playBtn').disabled = false;
+  document.getElementById('guessInput').disabled = false;
+
+  if (!ok) {
+    document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].loadError;
+    return;
+  }
+
+  document.getElementById('txtInstruction').textContent = TRANSLATIONS[currentLang].instruction;
+  coverPromise = getCoverArt(currentSong);
+}
+
+function unlockAudio() {
+  if (!audioUnlocked && widget) {
+    widget.setVolume(100);
+    audioUnlocked = true;
+  }
+}
+
+function playSnippet() {
+  if (!widget || gameOver || !currentSong) return;
+  unlockAudio();
+
+  if (isPlaying) {
+    stopPlayback();
+    return;
+  }
+
+  const maxSec = DURATIONS[attempt];
+
+  widget.pause();
+  widget.seekTo(0);
+
+  setTimeout(() => {
+    widget.play();
+    isPlaying = true;
+    document.getElementById('playIcon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+
+    let elapsed = 0;
+    clearInterval(progressTimer);
+    progressTimer = setInterval(() => {
+      elapsed += 0.05;
+      const pct = Math.min(100, (elapsed / totalTime) * 100);
+      document.getElementById('timelineProgress').style.width = pct + '%';
+      document.getElementById('currentTime').textContent = formatTime(elapsed);
+
+      if (elapsed >= maxSec) clearInterval(progressTimer);
+    }, 50);
+
+    clearTimeout(playTimer);
+    playTimer = setTimeout(() => {
+      stopPlayback();
+    }, maxSec * 1000);
+  }, 50);
+}
+
+function handleGuess(userGuess, isSkip = false) {
+  if (gameOver || !currentSong) return;
+
+  const t = TRANSLATIONS[currentLang];
+  const boxes = document.querySelectorAll('.attempt-box');
+  const currentBox = boxes[attempt];
+
+  const fullSongName = `${currentSong.artist} - ${currentSong.title}`;
+  const isCorrect = !isSkip && userGuess.toLowerCase() === fullSongName.toLowerCase();
+
+  if (isSkip) {
+    currentBox.textContent = t.skippedText;
+    currentBox.classList.add('skipped');
+  } else {
+    currentBox.textContent = userGuess;
+    currentBox.classList.add(isCorrect ? 'correct' : 'wrong');
+  }
+
+  if (isCorrect) {
+    endGame(true);
+  } else {
+    attempt++;
+    if (attempt >= DURATIONS.length) {
+      endGame(false);
+    } else {
+      const nextMax = DURATIONS[attempt];
+      document.getElementById('maxTime').textContent = formatTime(nextMax);
+    }
+  }
+
+  document.getElementById('guessInput').value = '';
+  document.getElementById('clearBtn').style.display = 'none';
+}
+
+async function endGame(won) {
+  gameOver = true;
+  isPlaying = false;
+  clearTimeout(playTimer);
+  clearInterval(progressTimer);
+
+  const t = TRANSLATIONS[currentLang];
+  stats.played++;
+
+  if (won) {
+    stats.wins++;
+    streak++;
+  } else {
+    streak = 0;
+  }
+  updateStreakUI();
+
+  // Suchfeld & Buttons ausblenden
+  document.getElementById('inputContainer').style.display = 'none';
+  document.getElementById('actionBtns').style.display = 'none';
+
+  // Result Box anzeigen (unter der Timeline, statt sie zu ersetzen)
+  const resBox = document.getElementById('resultBox');
+  resBox.classList.add('show');
+  document.getElementById('resultStatus').textContent = won ? t.won : t.lost;
+  document.getElementById('resultTitle').textContent = `${currentSong.artist} - ${currentSong.title}`;
+
+  const coverImg = document.getElementById('coverImg');
+  coverImg.src = placeholderCover(currentSong);
+
+  const myRound = roundId;
+  if (coverPromise) {
+    try {
+      const url = await coverPromise;
+      if (myRound === roundId && url) {
+        coverImg.src = url;
+      }
+    } catch (e) { /* keep placeholder */ }
+  }
+
+  if (widget) {
+    widget.seekTo(0);
+    widget.play();
+  }
+}
+
+function toggleFullPlay() {
+  if (!widget) return;
+  unlockAudio();
+  widget.toggle();
+}
+
+document.getElementById('playBtn').addEventListener('click', playSnippet);
+document.getElementById('fullPlayBtn').addEventListener('click', toggleFullPlay);
+
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const val = document.getElementById('guessInput').value.trim();
+  if (val) handleGuess(val);
+});
+
+document.getElementById('skipBtn').addEventListener('click', () => handleGuess('', true));
+document.getElementById('nextBtn').addEventListener('click', startNewGame);
+
+document.getElementById('btnLang').addEventListener('click', () => {
+  if (currentLang === 'DE') currentLang = 'EN';
+  else if (currentLang === 'EN') currentLang = 'RU';
+  else currentLang = 'DE';
+  updateLanguageUI();
+});
+
+const input = document.getElementById('guessInput');
+const suggestions = document.getElementById('suggestions');
+const clearBtn = document.getElementById('clearBtn');
+
+input.addEventListener('input', () => {
+  const val = input.value.trim().toLowerCase();
+  clearBtn.style.display = val ? 'block' : 'none';
+  suggestions.innerHTML = '';
+
+  if (!val) { suggestions.classList.remove('open'); return; }
+
+  const matches = SONGS.filter(s =>
+    `${s.artist} - ${s.title}`.toLowerCase().includes(val) ||
+    s.title.toLowerCase().includes(val)
+  );
+
+  matches.slice(0, 8).forEach(m => {
+    const fullName = `${m.artist} - ${m.title}`;
+    const div = document.createElement('div');
+    div.textContent = fullName;
+    div.addEventListener('click', () => {
+      input.value = fullName;
+      suggestions.classList.remove('open');
+    });
+    suggestions.appendChild(div);
+  });
+
+  suggestions.classList.toggle('open', matches.length > 0);
+});
+
+clearBtn.addEventListener('click', () => {
+  input.value = '';
+  clearBtn.style.display = 'none';
+  suggestions.classList.remove('open');
+});
+
+const overlay = document.getElementById('modalOverlay');
+const modalBody = document.getElementById('modalBody');
+
+function openModal(contentHtml) {
+  modalBody.innerHTML = contentHtml;
+  overlay.classList.add('active');
+}
+
+document.getElementById('modalClose').addEventListener('click', () => overlay.classList.remove('active'));
+overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
+
+document.getElementById('btnInfo').addEventListener('click', () => {
+  const t = TRANSLATIONS[currentLang];
+  openModal(`
+    <h3>${t.infoTitle}</h3>
+    <p>${t.infoText}</p>
+  `);
+});
+
+document.getElementById('btnStats').addEventListener('click', () => {
+  const t = TRANSLATIONS[currentLang];
+  const winRate = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+  openModal(`
+    <h3>${t.statsTitle}</h3>
+    <div class="stat-grid">
+      <div><div class="stat-val">${stats.played}</div><div class="stat-lbl">${t.statPlayed}</div></div>
+      <div><div class="stat-val">${stats.wins}</div><div class="stat-lbl">${t.statWins}</div></div>
+      <div><div class="stat-val">${winRate}%</div><div class="stat-lbl">${t.statRate}</div></div>
+    </div>
+  `);
+});
+
+document.getElementById('btnHelp').addEventListener('click', () => {
+  const t = TRANSLATIONS[currentLang];
+  openModal(`
+    <h3>${t.helpTitle}</h3>
+    <p>${t.helpText}</p>
+  `);
+});
+
+widget.bind(SC.Widget.Events.READY, () => {
+  startNewGame();
+});
+</script>
+</body>
+</html>
